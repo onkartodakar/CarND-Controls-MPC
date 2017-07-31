@@ -1,6 +1,40 @@
 # CarND-Controls-MPC
 Self-Driving Car Engineer Nanodegree Program
 
+  Model Predictive Control : Model predictive control is a process control technique which relies on process models that approximate the behavior and constraints of the process closely.
+  The major advantage of MPC over PID is that it optimizes control at current timestep taking into account the future timesteps. To control the self-driving car we have to model the motion of the car. There are multiple models which define the movement of the car taking into account various factors that impact the cars motion.  The more realistic the model, the higher is its complexity. To simplify the model, we introduce various approximations (eg. ignoring tire forces, gravity).
+
+  In this project we use the Kinematic model which ignores parameters like tires forces, mass, gravity etc. The kinematic model defines the vehicle state with its position (x, y), its velocity(v) and orientation(psi). The next state of the car can be calculated using the following equations where 'delta' is the steering angle and 'a' is the throttle.
+
+  ```
+      x_[t+1] = x[t] + v[t] * cos(psi[t]) * dt
+      y_[t+1] = y[t] + v[t] * sin(psi[t]) * dt
+      psi_[t+1] = psi[t] + v[t] / Lf * delta[t] * dt
+      v_[t+1] = v[t] + a[t] * dt
+```
+
+  MPC uses waypoints received from the simulator to calculate the expected trajectory. The model uses actuator controls to generate the actual trajectory such that the crosstrack error(cte) and orientation error(epsi) of the car are minimized. These errors are also tracked as part of the vehicle's state.
+
+  ```
+      cte[t+1] = f(x[t]) - y[t] + v[t] * sin(epsi[t]) * dt
+      epsi[t+1] = psi[t] - psides[t] + v[t] * delta[t] / Lf * dt
+  ```  
+  The vehicle model is implemented in the 'FG_eval' class.
+
+  Latency: To deal with latency in actuation the car's present state is updated using the following equations to predict cars position at the time of actual actuations. This updated position is then used by MPC.
+
+  ````
+    x = x + v*cos(psi)*latency;
+    y = y + v*sin(psi)*latency;
+    psi = psi + v*delta/Lf*latency;
+    v = v + acceleration*latency;
+  ````
+  Timesteps(N) &  Latency(dt) values : The N*dt product defines the interval over which the controls for the trajectory are predicted. The values used for N and dt are 10 and 0.1 respectively. Using a smaller frequency value of 0.05 results in the car oscillating. Using a larger frequency number 0.15 results in calculations over a longer interval which slows down the speed of the car.
+
+
+
+
+
 ---
 
 ## Dependencies
@@ -19,7 +53,7 @@ Self-Driving Car Engineer Nanodegree Program
   * Run either `install-mac.sh` or `install-ubuntu.sh`.
   * If you install from source, checkout to commit `e94b6e1`, i.e.
     ```
-    git clone https://github.com/uWebSockets/uWebSockets 
+    git clone https://github.com/uWebSockets/uWebSockets
     cd uWebSockets
     git checkout e94b6e1
     ```
@@ -42,7 +76,7 @@ Self-Driving Car Engineer Nanodegree Program
        per this [forum post](https://discussions.udacity.com/t/incorrect-checksum-for-freed-object/313433/19).
   * Linux
     * You will need a version of Ipopt 3.12.1 or higher. The version available through `apt-get` is 3.11.x. If you can get that version to work great but if not there's a script `install_ipopt.sh` that will install Ipopt. You just need to download the source from the Ipopt [releases page](https://www.coin-or.org/download/source/Ipopt/) or the [Github releases](https://github.com/coin-or/Ipopt/releases) page.
-    * Then call `install_ipopt.sh` with the source directory as the first argument, ex: `sudo bash install_ipopt.sh Ipopt-3.12.1`. 
+    * Then call `install_ipopt.sh` with the source directory as the first argument, ex: `sudo bash install_ipopt.sh Ipopt-3.12.1`.
   * Windows: TODO. If you can use the Linux subsystem and follow the Linux instructions.
 * [CppAD](https://www.coin-or.org/CppAD/)
   * Mac: `brew install cppad`
